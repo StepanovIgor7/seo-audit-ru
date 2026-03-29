@@ -65,7 +65,7 @@ bash ~/.claude/skills/seo-audit-ru/scripts/yandex_checks.sh <domain>
 
 **1D. PageSpeed CWV** (if not already in yandex_checks.sh output):
 ```bash
-curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://<domain>&key=REDACTED_KEY&strategy=mobile&category=performance"
+source ~/.claude/skills/yandex-wordstat/config/.env && curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://<domain>&key=${GOOGLE_PSI_KEY}&strategy=mobile&category=performance"
 ```
 
 ### Фаза 2: Дополнительные проверки (условные)
