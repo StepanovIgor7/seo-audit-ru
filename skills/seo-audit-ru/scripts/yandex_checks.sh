@@ -188,9 +188,10 @@ if [ -z "$PSI_KEY" ]; then
     fi
 fi
 
-# Hardcoded key as fallback
+# Fallback: require env variable GOOGLE_PSI_KEY
 if [ -z "$PSI_KEY" ]; then
-    PSI_KEY="REDACTED_KEY"
+    echo "[WARN] GOOGLE_PSI_KEY not set. Set it in ~/.claude/skills/yandex-wordstat/config/.env" >&2
+    echo "[WARN] CWV data will be empty." >&2
 fi
 
 CWV_DATA=$(curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${URL}&key=${PSI_KEY}&strategy=mobile&category=performance" 2>/dev/null)
