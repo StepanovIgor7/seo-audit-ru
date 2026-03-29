@@ -1,0 +1,134 @@
+# SEO-Audit-RU: Комплексный SEO-аудит для российского рынка
+
+Набор скиллов для Claude Code, объединяющий Google SEO-аудит и Яндекс-аналитику в единый отчёт.
+
+## Что входит
+
+| Скилл | Описание |
+|-------|----------|
+| `/seo-audit-ru` | Мета-скилл: объединяет Google и Яндекс аудит в единый отчёт |
+| `/yandex-webmaster` | Данные из Яндекс Вебмастер API: ИКС, индексация, запросы, диагностика, ссылки |
+| `/yandex-wordstat` | Анализ поискового спроса через Яндекс Wordstat API |
+
+## Возможности
+
+### /seo-audit-ru
+- Полный Google SEO-аудит (через `/seo-audit`)
+- Данные Яндекс Вебмастера (ИКС, индексация, поисковые запросы, диагностика)
+- Яндекс-специфичные проверки:
+  - robots.txt: секция Yandex, Clean-param, Host, Crawl-delay
+  - Яндекс Метрика (наличие, ID счётчика)
+  - Турбо-страницы
+  - Региональность (geo мета-теги)
+  - Трекеры (VK Pixel, Top.Mail.ru, Roistat, GA)
+  - Open Graph (для VK/Telegram)
+  - meta robots по разделам сайта
+  - Core Web Vitals (через PageSpeed API)
+- Единый сводный отчёт с рекомендациями
+
+### /yandex-webmaster
+- ИКС (SQI) и динамика за 90 дней
+- Статус индексации и история
+- ТОП поисковых запросов (до 3000)
+- Внешние ссылки + битые внутренние
+- Диагностика проблем (FATAL / CRITICAL / POSSIBLE / RECOMMENDATION)
+- Сайтмапы
+- Переобход страниц (recrawl)
+
+### /yandex-wordstat
+- ТОП-2000 запросов с частотностью
+- Ассоциации и синонимы
+- Региональный спрос
+- Динамика (тренды)
+- Анализ упущенного спроса
+
+## Установка
+
+### 1. Зависимости
+
+Установите [claude-seo](https://github.com/AgriciDaniel/claude-seo) (Google-часть аудита):
+
+```bash
+claude install-skill AgriciDaniel/claude-seo
+```
+
+### 2. Установка скиллов
+
+```bash
+git clone https://github.com/StepanovIgor7/seo-audit-ru.git
+cd seo-audit-ru
+bash install.sh
+```
+
+### 3. Настройка токенов
+
+Скопируйте `.env.example` и заполните своими токенами:
+
+```bash
+cp config/.env.example ~/.claude/skills/yandex-wordstat/config/.env
+```
+
+Отредактируйте файл `~/.claude/skills/yandex-wordstat/config/.env`:
+
+```
+YANDEX_WORDSTAT_TOKEN=ваш_токен_wordstat
+YANDEX_WEBMASTER_TOKEN=ваш_токен_webmaster
+```
+
+### 4. (Опционально) PageSpeed API
+
+Для данных Core Web Vitals от Google:
+1. Перейдите в [Google Cloud Console](https://console.cloud.google.com/)
+2. Включите **PageSpeed Insights API**
+3. Создайте API-ключ
+4. Добавьте в `.env`:
+
+```
+PAGESPEED_API_KEY=ваш_ключ
+```
+
+## Получение токенов Яндекса
+
+### Яндекс Wordstat API
+1. Запросите доступ: https://yandex.ru/support2/wordstat/ru/content/api-wordstat
+2. Получите OAuth-токен через: `https://oauth.yandex.ru/authorize?response_type=token&client_id={ваш_client_id}`
+3. Токен действует 1 год
+
+### Яндекс Вебмастер API
+1. Зарегистрируйте приложение на https://oauth.yandex.ru/
+2. Получите OAuth-токен
+3. Сайты должны быть верифицированы в [Яндекс Вебмастере](https://webmaster.yandex.ru/)
+
+## Использование
+
+```bash
+# Полный аудит (Google + Яндекс)
+/seo-audit-ru example.com
+
+# Только Яндекс-часть
+/seo-audit-ru example.com --yandex-only
+
+# Быстрый режим
+/seo-audit-ru example.com --quick
+
+# Яндекс Вебмастер отдельно
+/yandex-webmaster example.com
+/yandex-webmaster queries example.com
+/yandex-webmaster diagnostics example.com
+/yandex-webmaster sqi example.com
+/yandex-webmaster sites
+
+# Яндекс Wordstat отдельно
+/yandex-wordstat "ключевой запрос"
+```
+
+## Требования
+
+- [Claude Code](https://claude.ai/code) CLI
+- [claude-seo](https://github.com/AgriciDaniel/claude-seo) (для Google-аудита)
+- OAuth-токены Яндекс Wordstat и Вебмастер
+- curl (предустановлен на macOS/Linux)
+
+## Лицензия
+
+MIT

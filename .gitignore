@@ -1,0 +1,11 @@
+# Tokens and secrets
+.env
+config/.env
+
+# Cache
+cache/
+!cache/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
