@@ -122,13 +122,54 @@ PAGESPEED_API_KEY=ваш_ключ
 /yandex-wordstat "ключевой запрос"
 ```
 
+## Установка на Windows
+
+Скилл использует bash-скрипты. На Windows потребуется WSL (Windows Subsystem for Linux).
+
+### 1. Установить WSL
+
+В PowerShell от имени администратора:
+
+```powershell
+wsl --install
+```
+
+Перезагрузите компьютер. После перезагрузки создайте логин и пароль для Linux.
+
+### 2. Установить Claude Code (в WSL)
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs curl git
+npm install -g @anthropic-ai/claude-code
+```
+
+### 3. Далее — стандартная установка
+
+```bash
+claude install-skill AgriciDaniel/claude-seo
+git clone https://github.com/StepanovIgor7/seo-audit-ru.git
+cd seo-audit-ru
+bash install.sh
+```
+
+Заполните токены в `~/.claude/skills/yandex-wordstat/config/.env` и перезапустите Claude Code.
+
 ## Требования
 
 - [Claude Code](https://claude.ai/code) CLI
 - [claude-seo](https://github.com/AgriciDaniel/claude-seo) (для Google-аудита)
 - OAuth-токены Яндекс Wordstat и Вебмастер
 - curl (предустановлен на macOS/Linux)
+- Windows: WSL (Windows Subsystem for Linux)
+
+## Credits
+
+Этот проект использует и опирается на следующие открытые разработки:
+
+- **[claude-seo](https://github.com/AgriciDaniel/claude-seo)** by AgriciDaniel — Google SEO-аудит для Claude Code (MIT License). Используется как внешняя зависимость для Google-части аудита.
+- **[polyakov-claude-skills](https://github.com/artwist-polyakov/polyakov-claude-skills)** by artwist-polyakov — Яндекс Wordstat скилл для Claude Code (MIT License). Исходный код `/yandex-wordstat` включён в этот репозиторий.
 
 ## Лицензия
 
-MIT
+MIT — см. [LICENSE](LICENSE)
