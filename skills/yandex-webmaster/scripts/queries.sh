@@ -11,5 +11,10 @@ order_by="${2:-TOTAL_SHOWS}"
 limit="${3:-100}"
 
 base=$(host_path "$domain") || exit 1
-response=$(webmaster_get "${base}/search-queries/popular/?order_by=${order_by}&limit=${limit}")
+
+# Get SQI first for rate limit detection
+summary=$(webmaster_get "${base}/summary/")
+sqi=$(json_value "$summary" "sqi")
+
+response=$(webmaster_get_queries_safe "${base}/search-queries/popular/?order_by=${order_by}&limit=${limit}" "$sqi")
 echo "$response"

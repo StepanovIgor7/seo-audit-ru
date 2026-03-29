@@ -7,5 +7,5 @@ load_config
 
 domain="${1:?Usage: summary.sh <domain>}"
 base=$(host_path "$domain") || exit 1
-response=$(webmaster_get "${base}/summary/")
+response=$(webmaster_get_safe "${base}/summary/")
 echo "$response"

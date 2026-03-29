@@ -123,6 +123,79 @@ host_path() {
     echo "/user/${uid}/hosts/${hid}"
 }
 
+# Rate-limit-aware GET: retries once after delay if response looks like rate-limited zeros
+# Usage: webmaster_get_safe "endpoint_path"
+webmaster_get_safe() {
+    local path="$1"
+    local response
+    response=$(webmaster_get "$path")
+
+    # Detect silent rate limit: HTTP 200 with suspicious zero data
+    # Pattern: searchable_pages_count:0 when sqi > 0
+    local pages sqi
+    pages=$(json_value "$response" "searchable_pages_count")
+    sqi=$(json_value "$response" "sqi")
+
+    if [[ "$pages" == "0" && -n "$sqi" && "$sqi" -gt 0 ]] 2>/dev/null; then
+        echo "[WARN] Possible rate limit: searchable_pages_count=0 with sqi=$sqi. Retrying in 10s..." >&2
+        sleep 10
+        response=$(webmaster_get "$path")
+        # Check again after retry
+        pages=$(json_value "$response" "searchable_pages_count")
+        if [[ "$pages" == "0" ]] 2>/dev/null; then
+            echo "[WARN] Still 0 after retry. Data may be affected by API rate limit. Retrying in 30s..." >&2
+            sleep 30
+            response=$(webmaster_get "$path")
+            pages=$(json_value "$response" "searchable_pages_count")
+            if [[ "$pages" == "0" ]] 2>/dev/null; then
+                echo "[ERROR] searchable_pages_count=0 persists after 2 retries. Marking as RATE_LIMITED." >&2
+                # Inject warning into response
+                response=$(echo "$response" | sed 's/}$/,"_rate_limit_warning":"searchable_pages_count may be inaccurate due to API rate limiting"}/')
+            fi
+        fi
+    fi
+
+    echo "$response"
+}
+
+# Rate-limit-aware GET for queries: retries if count=0 for high-SQI sites
+# Usage: webmaster_get_queries_safe "endpoint_path" sqi_value
+webmaster_get_queries_safe() {
+    local path="$1"
+    local sqi="${2:-0}"
+    local response
+    response=$(webmaster_get "$path")
+
+    local count
+    count=$(json_value "$response" "count")
+
+    if [[ "$count" == "0" && -n "$sqi" && "$sqi" -gt 200 ]] 2>/dev/null; then
+        echo "[WARN] Possible rate limit: 0 queries with sqi=$sqi. Retrying in 10s..." >&2
+        sleep 10
+        response=$(webmaster_get "$path")
+        count=$(json_value "$response" "count")
+        if [[ "$count" == "0" ]] 2>/dev/null; then
+            echo "[WARN] Still 0 queries after retry. Retrying in 30s..." >&2
+            sleep 30
+            response=$(webmaster_get "$path")
+            count=$(json_value "$response" "count")
+            if [[ "$count" == "0" ]] 2>/dev/null; then
+                echo "[ERROR] 0 queries persists after 2 retries. Marking as RATE_LIMITED." >&2
+                response=$(echo "$response" | sed 's/}$/,"_rate_limit_warning":"query count may be inaccurate due to API rate limiting"}/')
+            fi
+        fi
+    fi
+
+    echo "$response"
+}
+
+# Inter-host delay: call between auditing different sites in one session
+# Usage: rate_limit_pause
+rate_limit_pause() {
+    local delay="${1:-3}"
+    sleep "$delay"
+}
+
 # Extract JSON value (no jq)
 json_value() {
     local json="$1"

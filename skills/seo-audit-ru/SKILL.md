@@ -235,6 +235,8 @@ Parse all JSON results and present a unified report in the following structure.
 | /seo-audit не завершился (таймаут) | Использовать данные из yandex_checks.sh (CWV, meta robots) как замену Google-части |
 | PageSpeed API не ответил | Отметить "CWV: данные недоступны" |
 | Сайт недоступен (DNS/connection error) | Прервать аудит, сообщить пользователю |
+| **Яндекс API rate limit** (searchable_pages_count=0 при sqi>0, или count=0 запросов при sqi>200) | Скрипты summary.sh и queries.sh автоматически повторят запрос через 5 сек (webmaster_get_safe / webmaster_get_queries_safe). Если нули сохраняются — отметить в отчёте как «данные не получены (API rate limit)», НЕ писать «0 страниц» или «0 запросов» как факт |
+| **Аудит нескольких сайтов в одной сессии** | Между сайтами добавлять паузу 3-5 сек (`rate_limit_pause` из common.sh). Яндекс API возвращает HTTP 200 с нулевыми данными при превышении лимита — стандартных заголовков X-RateLimit нет |
 
 ## Config
 
