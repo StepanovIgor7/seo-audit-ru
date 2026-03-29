@@ -14,6 +14,15 @@
 
 ### /seo-audit-ru
 - Полный Google SEO-аудит (через `/seo-audit`)
+  - Technical SEO: краулинг, индексация, безопасность, URL-структура, мобильность
+  - Core Web Vitals: LCP, INP, CLS, TTFB (через Google PageSpeed API)
+  - Контент: E-E-A-T анализ, тонкий контент, читабельность
+  - Schema.org: микроразметка, валидация JSON-LD
+  - Изображения: alt-тексты, размеры, форматы, lazy loading
+  - AI Search (GEO): видимость в AI Overviews, ChatGPT, Perplexity
+  - Сайтмап: валидация XML, структура
+<img width="468" height="113" alt="image" src="https://github.com/user-attachments/assets/0741abc1-43bb-40ef-9ae2-e2759bfa8b09" />
+
 - Данные Яндекс Вебмастера (ИКС, индексация, поисковые запросы, диагностика)
 - Яндекс-специфичные проверки:
   - robots.txt: секция Yandex, Clean-param, Host, Crawl-delay
