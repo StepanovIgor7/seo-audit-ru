@@ -21,8 +21,6 @@
   - Изображения: alt-тексты, размеры, форматы, lazy loading
   - AI Search (GEO): видимость в AI Overviews, ChatGPT, Perplexity
   - Сайтмап: валидация XML, структура
-<img width="468" height="113" alt="image" src="https://github.com/user-attachments/assets/0741abc1-43bb-40ef-9ae2-e2759bfa8b09" />
-
 - Данные Яндекс Вебмастера (ИКС, индексация, поисковые запросы, диагностика)
 - Яндекс-специфичные проверки:
   - robots.txt: секция Yandex, Clean-param, Host, Crawl-delay
