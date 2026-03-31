@@ -147,10 +147,12 @@ jobs:
             exit 1
           fi
 
-      - name: Verify all shell scripts are read-only
+      - name: Verify seo-audit-ru scripts are read-only
         run: |
+          # Only check seo-audit-ru scripts — other skills (webmaster, wordstat)
+          # legitimately use POST for Yandex API read operations
           ERRORS=0
-          for script in skills/*/scripts/*.sh; do
+          for script in skills/seo-audit-ru/scripts/*.sh; do
             if grep -E 'curl.*(-d |--data |--data-raw |--data-binary |-X POST|-X PUT|-X DELETE)' "$script"; then
               echo "::error::$script contains write operations"
               ERRORS=1
@@ -161,7 +163,7 @@ jobs:
             fi
           done
           if [ $ERRORS -eq 0 ]; then
-            echo "All scripts are read-only safe"
+            echo "seo-audit-ru scripts are read-only safe"
           else
             exit 1
           fi
