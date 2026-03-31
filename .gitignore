@@ -1,11 +1,36 @@
-# Tokens and secrets
+# Секреты и токены
 .env
+.env.*
+!.env.example
 config/.env
+*.key
+*.pem
+*_token*
+*_secret*
+secrets/
 
-# Cache
+# Кэш
 cache/
 !cache/.gitkeep
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
 
-# OS files
+# Данные аудитов
+reports/
+exports/
+*.csv
+*.xlsx
+*.xls
+
+# Системное
+*.log
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+
+# Временные файлы
+*.tmp
+*.bak

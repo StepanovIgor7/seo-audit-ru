@@ -159,7 +159,7 @@ echo '"meta_robots_sample": ['
 
 # Sample different page types and check their meta robots
 FIRST="true"
-for path in "/" "/blog" "/authors" "/conference"; do
+for path in "/" "/blog" "/about" "/contacts"; do
     SAMPLE_URL="${URL}${path}"
     SAMPLE_HTML=$(curl -sL -A "Mozilla/5.0" "$SAMPLE_URL" 2>/dev/null)
     META_ROBOTS=$(echo "$SAMPLE_HTML" | grep -oi '<meta name="robots"[^>]*content="[^"]*"' | grep -o 'content="[^"]*"' | sed 's/content="//;s/"//' | head -1)

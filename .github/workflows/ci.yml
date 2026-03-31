@@ -1,0 +1,194 @@
+name: SEO Audit RU CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-structure:
+    name: Validate skill structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: |
+          FILES=(
+            "SKILL.md"
+            "CHANGELOG.md"
+            "scripts/yandex_checks.sh"
+            "tests/test_yandex_checks.sh"
+            "tests/test_skill_structure.py"
+            ".gitignore"
+          )
+          MISSING=0
+          for f in "${FILES[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Missing required file: $f"
+              MISSING=1
+            else
+              echo "Found: $f"
+            fi
+          done
+          if [ $MISSING -eq 1 ]; then exit 1; fi
+
+      - name: Validate SKILL.md frontmatter
+        run: |
+          HEAD=$(head -30 SKILL.md)
+          if ! echo "$HEAD" | grep -q "^---"; then
+            echo "::error::SKILL.md missing YAML frontmatter"
+            exit 1
+          fi
+          for field in "name:" "description:" "allowed-tools:" "user-invokable:"; do
+            if ! echo "$HEAD" | grep -q "$field"; then
+              echo "::error::SKILL.md missing '$field' in frontmatter"
+              exit 1
+            fi
+          done
+          echo "SKILL.md frontmatter valid"
+
+      - name: Check scripts are executable
+        run: |
+          for script in scripts/yandex_checks.sh tests/test_yandex_checks.sh; do
+            if [ ! -x "$script" ]; then
+              echo "::error::$script is not executable"
+              exit 1
+            fi
+          done
+          echo "All scripts are executable"
+
+  security-scan:
+    name: Security scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for leaked API keys
+        run: |
+          FOUND=0
+
+          # Google API keys (AIza...)
+          if grep -rE 'AIza[A-Za-z0-9_-]{35}' \
+            --include='*.sh' --include='*.md' --include='*.py' --include='*.yml' \
+            --exclude-dir=.git . 2>/dev/null; then
+            echo "::error::Possible Google API key found!"
+            FOUND=1
+          fi
+
+          # Yandex OAuth tokens
+          if grep -rE 'y[0-3]_[A-Za-z0-9_-]{35,}' \
+            --include='*.sh' --include='*.md' --include='*.py' --include='*.yml' \
+            --exclude-dir=.git . 2>/dev/null | \
+            grep -vE '(example|template|placeholder|ваш_|your_|ЗАМЕНИТЕ)'; then
+            echo "::error::Possible Yandex OAuth token found!"
+            FOUND=1
+          fi
+
+          # Yandex IAM tokens
+          if grep -rE 't1\.[A-Za-z0-9_-]{80,}' \
+            --include='*.sh' --include='*.md' --include='*.py' \
+            --exclude-dir=.git . 2>/dev/null | \
+            grep -vE '(example|template)'; then
+            echo "::error::Possible Yandex IAM token found!"
+            FOUND=1
+          fi
+
+          # Generic passwords / secrets
+          if grep -rEi 'password\s*[:=]\s*["\x27][^"\x27]{8,}' \
+            --include='*.sh' --include='*.py' --include='*.yml' \
+            --exclude-dir=.git . 2>/dev/null | \
+            grep -vE '(example|placeholder|your_|ваш_)'; then
+            echo "::error::Possible hardcoded password found!"
+            FOUND=1
+          fi
+
+          if [ $FOUND -eq 0 ]; then
+            echo "No leaked secrets found"
+          else
+            exit 1
+          fi
+
+      - name: Check no .env files committed
+        run: |
+          ENVFILES=$(find . -name '.env' -o -name '.env.*' ! -name '.env.example' | grep -v .git || true)
+          if [ -n "$ENVFILES" ]; then
+            echo "::error::.env file(s) found: $ENVFILES"
+            exit 1
+          fi
+          echo "No .env files in repo"
+
+      - name: Verify .gitignore completeness
+        run: |
+          MISSING=0
+          REQUIRED_IGNORES=(".env" "*.log" "__pycache__" ".DS_Store")
+          for pattern in "${REQUIRED_IGNORES[@]}"; do
+            if ! grep -qF "$pattern" .gitignore 2>/dev/null; then
+              echo "::warning::Missing from .gitignore: $pattern"
+              MISSING=1
+            fi
+          done
+          if [ $MISSING -eq 0 ]; then
+            echo ".gitignore covers all sensitive patterns"
+          else
+            exit 1
+          fi
+
+      - name: Verify yandex_checks.sh is read-only
+        run: |
+          if grep -E 'curl.*(-d |--data |--data-raw |--data-binary |-X POST|-X PUT|-X DELETE)' scripts/yandex_checks.sh; then
+            echo "::error::yandex_checks.sh contains write operations (POST/PUT/DELETE)"
+            exit 1
+          fi
+          if grep -E 'eval\s+.*\$' scripts/yandex_checks.sh; then
+            echo "::error::yandex_checks.sh contains dangerous eval"
+            exit 1
+          fi
+          echo "yandex_checks.sh is read-only safe"
+
+  test-bash:
+    name: Test yandex_checks.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run bash tests
+        run: bash tests/test_yandex_checks.sh
+
+  test-python:
+    name: Test Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pytest pyyaml
+
+      - name: Run Python tests
+        run: python -m pytest tests/test_skill_structure.py -v --tb=short
+
+  changelog-check:
+    name: Changelog updated
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check CHANGELOG.md was updated
+        run: |
+          if git diff --name-only origin/main...HEAD | grep -q "CHANGELOG.md"; then
+            echo "CHANGELOG.md updated"
+          else
+            echo "::warning::CHANGELOG.md not updated - please add a changelog entry"
+            exit 1
+          fi
