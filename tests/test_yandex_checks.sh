@@ -15,8 +15,13 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SCRIPT="$SCRIPT_DIR/scripts/yandex_checks.sh"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SCRIPT="$REPO_ROOT/skills/seo-audit-ru/scripts/yandex_checks.sh"
+
+# Fallback: if running from skill dir directly (not from repo root)
+if [ ! -f "$SCRIPT" ]; then
+    SCRIPT="$REPO_ROOT/scripts/yandex_checks.sh"
+fi
 
 PASSED=0
 FAILED=0

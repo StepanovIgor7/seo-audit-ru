@@ -16,9 +16,11 @@ jobs:
       - name: Check required files exist
         run: |
           FILES=(
-            "SKILL.md"
+            "skills/seo-audit-ru/SKILL.md"
+            "skills/seo-audit-ru/scripts/yandex_checks.sh"
+            "skills/yandex-webmaster/SKILL.md"
+            "skills/yandex-wordstat/SKILL.md"
             "CHANGELOG.md"
-            "scripts/yandex_checks.sh"
             "tests/test_yandex_checks.sh"
             "tests/test_skill_structure.py"
             ".gitignore"
@@ -36,27 +38,35 @@ jobs:
 
       - name: Validate SKILL.md frontmatter
         run: |
-          HEAD=$(head -30 SKILL.md)
-          if ! echo "$HEAD" | grep -q "^---"; then
-            echo "::error::SKILL.md missing YAML frontmatter"
-            exit 1
-          fi
-          for field in "name:" "description:" "allowed-tools:" "user-invokable:"; do
-            if ! echo "$HEAD" | grep -q "$field"; then
-              echo "::error::SKILL.md missing '$field' in frontmatter"
+          for skill_md in skills/*/SKILL.md; do
+            HEAD=$(head -30 "$skill_md")
+            if ! echo "$HEAD" | grep -q "^---"; then
+              echo "::error::$skill_md missing YAML frontmatter"
               exit 1
             fi
+            if ! echo "$HEAD" | grep -q "name:"; then
+              echo "::error::$skill_md missing 'name' in frontmatter"
+              exit 1
+            fi
+            if ! echo "$HEAD" | grep -q "description:"; then
+              echo "::error::$skill_md missing 'description' in frontmatter"
+              exit 1
+            fi
+            echo "$skill_md frontmatter valid"
           done
-          echo "SKILL.md frontmatter valid"
 
       - name: Check scripts are executable
         run: |
-          for script in scripts/yandex_checks.sh tests/test_yandex_checks.sh; do
+          ERRORS=0
+          for script in skills/*/scripts/*.sh tests/test_*.sh; do
             if [ ! -x "$script" ]; then
               echo "::error::$script is not executable"
-              exit 1
+              ERRORS=1
+            else
+              echo "OK: $script"
             fi
           done
+          if [ $ERRORS -eq 1 ]; then exit 1; fi
           echo "All scripts are executable"
 
   security-scan:
@@ -137,17 +147,24 @@ jobs:
             exit 1
           fi
 
-      - name: Verify yandex_checks.sh is read-only
+      - name: Verify all shell scripts are read-only
         run: |
-          if grep -E 'curl.*(-d |--data |--data-raw |--data-binary |-X POST|-X PUT|-X DELETE)' scripts/yandex_checks.sh; then
-            echo "::error::yandex_checks.sh contains write operations (POST/PUT/DELETE)"
+          ERRORS=0
+          for script in skills/*/scripts/*.sh; do
+            if grep -E 'curl.*(-d |--data |--data-raw |--data-binary |-X POST|-X PUT|-X DELETE)' "$script"; then
+              echo "::error::$script contains write operations"
+              ERRORS=1
+            fi
+            if grep -E 'eval\s+.*\$' "$script"; then
+              echo "::error::$script contains dangerous eval"
+              ERRORS=1
+            fi
+          done
+          if [ $ERRORS -eq 0 ]; then
+            echo "All scripts are read-only safe"
+          else
             exit 1
           fi
-          if grep -E 'eval\s+.*\$' scripts/yandex_checks.sh; then
-            echo "::error::yandex_checks.sh contains dangerous eval"
-            exit 1
-          fi
-          echo "yandex_checks.sh is read-only safe"
 
   test-bash:
     name: Test yandex_checks.sh

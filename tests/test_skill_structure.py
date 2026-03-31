@@ -10,33 +10,49 @@ import os
 import re
 import yaml
 
-SKILL_DIR = os.path.join(os.path.dirname(__file__), "..")
+# Repo root = parent of tests/
+REPO_ROOT = os.path.join(os.path.dirname(__file__), "..")
+
+# Skill lives inside skills/seo-audit-ru/ in the repo
+SKILL_DIR = os.path.join(REPO_ROOT, "skills", "seo-audit-ru")
+
+# Fallback: if running from skill dir directly (not repo)
+if not os.path.isdir(SKILL_DIR):
+    SKILL_DIR = REPO_ROOT
 
 
 class TestRequiredFiles:
     """Все необходимые файлы существуют."""
 
-    REQUIRED = [
-        "SKILL.md",
+    REPO_FILES = [
         "CHANGELOG.md",
-        "scripts/yandex_checks.sh",
         "tests/test_yandex_checks.sh",
         "tests/test_skill_structure.py",
         ".github/workflows/ci.yml",
         ".gitignore",
     ]
 
-    def test_all_required_files_exist(self):
-        for filepath in self.REQUIRED:
+    SKILL_FILES = [
+        "SKILL.md",
+        "scripts/yandex_checks.sh",
+    ]
+
+    def test_repo_files_exist(self):
+        for filepath in self.REPO_FILES:
+            full = os.path.join(REPO_ROOT, filepath)
+            assert os.path.exists(full), f"Missing repo file: {filepath}"
+
+    def test_skill_files_exist(self):
+        for filepath in self.SKILL_FILES:
             full = os.path.join(SKILL_DIR, filepath)
-            assert os.path.exists(full), f"Missing: {filepath}"
+            assert os.path.exists(full), f"Missing skill file: {filepath}"
 
     def test_script_is_executable(self):
         script = os.path.join(SKILL_DIR, "scripts", "yandex_checks.sh")
         assert os.access(script, os.X_OK), "yandex_checks.sh is not executable"
 
     def test_test_script_is_executable(self):
-        script = os.path.join(SKILL_DIR, "tests", "test_yandex_checks.sh")
+        script = os.path.join(REPO_ROOT, "tests", "test_yandex_checks.sh")
         assert os.access(script, os.X_OK), "test_yandex_checks.sh is not executable"
 
 
@@ -160,12 +176,12 @@ class TestChangelog:
     """CHANGELOG.md имеет корректный формат."""
 
     def _load_changelog(self) -> str:
-        path = os.path.join(SKILL_DIR, "CHANGELOG.md")
+        path = os.path.join(REPO_ROOT, "CHANGELOG.md")
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
 
     def test_has_changelog(self):
-        path = os.path.join(SKILL_DIR, "CHANGELOG.md")
+        path = os.path.join(REPO_ROOT, "CHANGELOG.md")
         assert os.path.exists(path)
 
     def test_has_unreleased_section(self):
@@ -179,7 +195,6 @@ class TestChangelog:
 
     def test_follows_keepachangelog(self):
         content = self._load_changelog()
-        # Проверяем наличие стандартных секций
         has_standard_sections = any(
             section in content
             for section in ["### Added", "### Changed", "### Fixed",
@@ -193,7 +208,7 @@ class TestGitignore:
     """.gitignore покрывает чувствительные файлы."""
 
     def _load_gitignore(self) -> str:
-        path = os.path.join(SKILL_DIR, ".gitignore")
+        path = os.path.join(REPO_ROOT, ".gitignore")
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
 
