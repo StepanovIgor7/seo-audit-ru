@@ -48,7 +48,9 @@ if [[ "$REGION_TYPE" != "all" ]]; then
 fi
 
 if [[ "$DEVICES" != "all" ]]; then
-    PARAMS="$PARAMS,\"devices\":\"$DEVICES\""
+    PARAMS="$PARAMS,\"devices\":[\"$DEVICES\"]"
+else
+    PARAMS="$PARAMS,\"devices\":[\"all\"]"
 fi
 
 PARAMS="$PARAMS}"
@@ -63,7 +65,8 @@ echo "Fetching data..."
 result=$(wordstat_request "regions" "$PARAMS")
 
 # Check for error
-if echo "$result" | grep -q '"error"'; then
+# Check for error (ignore "error":null which means no error)
+if echo "$result" | grep -q '"error":"[^"]*"'; then
     echo "Error:"
     echo "$result"
     exit 1

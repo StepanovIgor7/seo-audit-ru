@@ -49,10 +49,11 @@ wordstat_request() {
 
     local ws_url="https://api.wordstat.yandex.net/v1/$method"
 
-    curl -s -X POST "$ws_url" \
+    # Use printf + @- to preserve UTF-8 encoding on Windows
+    printf '%s' "$params" | curl -s -X POST "$ws_url" \
         -H "Authorization: Bearer $YANDEX_WORDSTAT_TOKEN" \
         -H "Content-Type: application/json; charset=utf-8" \
-        -d "$params"
+        -d @-
 }
 
 # Extract JSON value using grep/sed (no jq dependency)

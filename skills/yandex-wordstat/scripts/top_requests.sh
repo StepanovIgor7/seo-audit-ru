@@ -96,9 +96,9 @@ csv_escape() {
     printf '"%s"' "$_csv_val"
 }
 
-# Build JSON payload
+# Build JSON payload — API expects "phrases" array and "devices" array
 PHRASE_ESCAPED=$(json_escape "$PHRASE")
-PARAMS="{\"phrase\":\"$PHRASE_ESCAPED\""
+PARAMS="{\"phrases\":[\"$PHRASE_ESCAPED\"]"
 
 if [ -n "$LIMIT" ]; then
     PARAMS="$PARAMS,\"numPhrases\":$LIMIT"
@@ -109,7 +109,9 @@ if [ -n "$REGIONS" ]; then
 fi
 
 if [ "$DEVICES" != "all" ]; then
-    PARAMS="$PARAMS,\"devices\":\"$DEVICES\""
+    PARAMS="$PARAMS,\"devices\":[\"$DEVICES\"]"
+else
+    PARAMS="$PARAMS,\"devices\":[\"all\"]"
 fi
 
 PARAMS="$PARAMS}"
@@ -124,13 +126,14 @@ echo ""
 echo "Fetching data..."
 
 # API request — save to temp file, not variable
-curl -s -X POST "$WS_API/topRequests" \
+# Use printf + @- to preserve UTF-8 encoding on Windows
+printf '%s' "$PARAMS" | curl -s -X POST "$WS_API/topRequests" \
     -H "Authorization: Bearer $YANDEX_WORDSTAT_TOKEN" \
     -H "Content-Type: application/json; charset=utf-8" \
-    -d "$PARAMS" | tr -d '\n\r' > "$TMPFILE"
+    -d @- | tr -d '\n\r' > "$TMPFILE"
 
-# Check for error
-if grep -q '"error"' "$TMPFILE"; then
+# Check for error (ignore "error":null which means no error)
+if grep -q '"error":"[^"]*"' "$TMPFILE"; then
     echo "Error:"
     cat "$TMPFILE"
     exit 1

@@ -14,7 +14,14 @@ echo ""
 # Test with a simple regions request
 response=$(wordstat_request "regions" '{"phrase":"тест"}')
 
-if echo "$response" | grep -q '"regions"'; then
+# Check for actual error (ignore "error":null)
+if echo "$response" | grep -q '"error":"[^"]*"'; then
+    echo "Wordstat API: Error"
+    echo "$response"
+    exit 1
+fi
+
+if echo "$response" | grep -q '"regionId"'; then
     echo "Wordstat API: OK"
     echo ""
 
