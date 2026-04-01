@@ -87,16 +87,20 @@ find_host_id() {
     local response
     response=$(webmaster_get "/user/${uid}/hosts/")
 
-    # Try exact match with different URL formats
+    # Try exact match with different URL formats (prefer HTTPS main mirror)
+    # host_id format in API: "https:domain:443" or "http:domain:80" (no //)
     local host_id=""
-    for prefix in "https://${domain}:443" "http://${domain}:80" "https://www.${domain}:443" "http://www.${domain}:80"; do
-        host_id=$(echo "$response" | grep -o "\"host_id\":\"[^\"]*${prefix}[^\"]*\"" | head -1 | sed 's/"host_id":"//' | tr -d '"')
+    for prefix in "https:${domain}:443" "http:${domain}:80" "https:www.${domain}:443" "http:www.${domain}:80"; do
+        host_id=$(echo "$response" | grep -o "\"host_id\":\"${prefix}\"" | head -1 | sed 's/"host_id":"//' | tr -d '"')
         if [[ -n "$host_id" ]]; then
             break
         fi
     done
 
-    # Fallback: search by domain substring
+    # Fallback: search by domain substring (prefer HTTPS)
+    if [[ -z "$host_id" ]]; then
+        host_id=$(echo "$response" | grep -o "\"host_id\":\"https:[^\"]*${domain}[^\"]*\"" | head -1 | sed 's/"host_id":"//' | tr -d '"')
+    fi
     if [[ -z "$host_id" ]]; then
         host_id=$(echo "$response" | grep -o "\"host_id\":\"[^\"]*${domain}[^\"]*\"" | head -1 | sed 's/"host_id":"//' | tr -d '"')
     fi
