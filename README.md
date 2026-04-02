@@ -131,9 +131,11 @@ PAGESPEED_API_KEY=ваш_ключ
 
 ## Установка на Windows
 
-Скилл использует bash-скрипты. На Windows потребуется WSL (Windows Subsystem for Linux).
+Скилл использует bash-скрипты. На Windows есть два варианта: WSL (рекомендуется) и Git Bash.
 
-### 1. Установить WSL
+### Вариант 1: WSL (рекомендуется)
+
+#### 1. Установить WSL
 
 В PowerShell от имени администратора:
 
@@ -143,7 +145,7 @@ wsl --install
 
 Перезагрузите компьютер. После перезагрузки создайте логин и пароль для Linux.
 
-### 2. Установить Claude Code (в WSL)
+#### 2. Установить Claude Code (в WSL)
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -151,7 +153,7 @@ sudo apt-get install -y nodejs curl git
 npm install -g @anthropic-ai/claude-code
 ```
 
-### 3. Далее — стандартная установка
+#### 3. Далее — стандартная установка
 
 ```bash
 claude install-skill AgriciDaniel/claude-seo
@@ -161,6 +163,35 @@ bash install.sh
 ```
 
 Заполните токены в `~/.claude/skills/yandex-wordstat/config/.env` и перезапустите Claude Code.
+
+### Вариант 2: Git Bash
+
+Если WSL не подходит, можно использовать [Git for Windows](https://gitforwindows.org/) (включает Git Bash с поддержкой bash + curl).
+
+#### 1. Установить Git for Windows
+
+Скачайте и установите с https://gitforwindows.org/
+
+#### 2. Установить в Git Bash
+
+```bash
+# Установить зависимость claude-seo (если Claude Code доступен)
+claude install-skill AgriciDaniel/claude-seo
+
+# Клонировать и установить
+git clone https://github.com/StepanovIgor7/seo-audit-ru.git
+cd seo-audit-ru
+bash install.sh
+```
+
+#### 3. Настроить токены
+
+```bash
+cp config/.env.example ~/.claude/skills/yandex-wordstat/config/.env
+# Отредактируйте файл, добавив свои токены
+```
+
+> Git Bash поддерживает bash и curl, поэтому все скрипты будут работать без WSL.
 
 ## Требования
 
