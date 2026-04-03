@@ -117,6 +117,14 @@ Based on the data, suggest:
 - Queries where the site is close to TOP-10 (positions 11-20) — growth opportunities
 - Broken links that should be fixed
 
+### Предупреждения при интерпретации данных (из обратной связи SEO-специалиста)
+
+**Битые ссылки (links.sh):** API может сообщить N тысяч «битых» ссылок. Но многие из этих URL отдают HTTP 200 с `noindex` — это рабочие страницы, не реальные 404. Перед тем как писать «N битых ссылок = CRITICAL», проверь выборку 5-10 URL через `curl -sI URL`. В отчёте: «Вебмастер сообщает N ссылок, выборочная проверка показала X% реальных 404».
+
+**DOCUMENTS_MISSING_DESCRIPTION:** Это агрегированная проблема САЙТА, не конкретной страницы. Коммерческие страницы могут иметь meta description, а проблема — на архивных/авторских. Проверяй конкретные URL через `curl -sL URL | head -50 | grep 'meta name="description"'`.
+
+**Количество страниц в индексе:** При `searchable_pages_count=0` и `sqi > 0` — это rate limit API, не реальный ноль. Подожди 5 сек и повтори.
+
 ## Error Handling
 
 - **401 Unauthorized**: Token expired. User needs to get a new one at https://oauth.yandex.ru/
